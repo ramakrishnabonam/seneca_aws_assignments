@@ -1,0 +1,22 @@
+import json
+import boto3
+
+def lambda_handler(event, context):
+
+    s3_bucket = event['Records'][0]['s3']['bucket']['name']
+    file_key = event['Records'][0]['s3']['object']['key']
+    
+     sns_client = boto3.client('sns')
+    
+    sns_topic_name = 'S3_File_Upload_Topic'  # Replace with your desired topic name
+    response = sns_client.create_topic(Name=sns_topic_name)
+    
+    topic_arn = response['TopicArn']
+
+    message = f"A new file '{file_key}' has been uploaded to S3 bucket '{s3_bucket}'"
+    sns_client.publish(TopicArn=topic_arn, Message=message)
+    
+    return {
+        'statusCode': 200,
+        'body': json.dumps('SNS topic created and message published successfully!')
+    }
