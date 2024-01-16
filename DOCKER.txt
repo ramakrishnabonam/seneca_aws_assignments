@@ -1,0 +1,264 @@
+What is Docker?
+Docker is an open platform for developing, shipping, and running applications.
+Docker enables you to separate your applications from your infrastructure so you can deliver software quickly. 
+With Docker, you can manage your infrastructure in the same ways you manage your applications.
+
+What is a Docker Container Image?
+A Docker container image is a lightweight, standalone, executable package of software that includes everything needed to run an application for 
+instance code, runtime, system tools, system libraries, and settings.
+
+What is ECR?
+Amazon Elastic Container Registry (Amazon ECR) is an AWS-managed container image registry service that is secure, scalable, and reliable. 
+Amazon ECR supports private repositories with resource-based permissions using AWS IAM.
+
+Overview
+Deploying a web application to Amazon ECS with EC2|DOCKER|Fargate|ECR|Load Balancer
+
+Step 1
+Launch an EC2 Instance and Install Docker
+
+Launching an EC2 Instance:
+Sign in to AWS Console:
+
+Go to the AWS Management Console.
+Sign in with your AWS account.
+Navigate to EC2 Dashboard:
+
+In the AWS Management Console, go to the EC2 dashboard.
+Launch Instance:
+
+Click on the "Launch Instance" button.
+Choose AMI:
+
+Select an Amazon Machine Image (AMI). Choose an Amazon Linux or any other suitable Linux distribution.
+Choose Instance Type:
+
+Select an instance type based on your requirements.
+Configure Instance:
+
+Set up the instance details, including the number of instances, network settings, and other configurations.
+Add Storage:
+
+Specify the amount of storage needed for the instance.
+Add Tags (Optional):
+
+Add tags to help identify your instance.
+Configure Security Group:
+
+Create or select a security group that allows inbound traffic on the necessary ports (e.g., SSH for remote access).
+Review and Launch:
+
+Review your configuration and click "Launch."
+Key Pair:
+Choose an existing key pair or create a new one. This key pair is required for SSH access to your instance.
+Launch Instances:
+Click "Launch Instances."
+
+Connect to the EC2 Instance:
+
+Installing Docker on the EC2 Instance:
+Update the Package Repository:
+sudo yum update -y
+
+Install docker
+sudo amazon-linux-extras install docker
+
+Run the following command to check if Docker is installed successfully:
+docker --version
+
+
+
+Step 2
+Build Docker Image and Containerize Web Application
+
+Create a Dockerfile:
+Create a file named Dockerfile in your project directory 
+
+FROM nginx:1.10.1-alpine
+COPY . /usr/share/nginx/html
+
+Create HTML File:
+Create a simple HTML file named index.html in the same directory as your Dockerfile:
+
+<html>
+<title>Simple Website</title>
+<h1>This is the most beautifuk website</h1>
+<p>It is beautiful on th inside</p>
+</html>
+
+Build Docker Image:
+docker build -t html-web-nginx:v1 .
+
+Run Docker Container:
+docker run -it -d -p 80:80 html-web-nginx:v1
+
+
+Step 3
+Create a Repository using Elastic Container Registry (ECR) in AWS
+Create Role and attach permissions
+
+Sign in to AWS Console:
+Go to the AWS Management Console.
+Sign in with your AWS account.
+
+Navigate to Amazon ECR:
+In the AWS Management Console, go to the Amazon ECR dashboard.
+
+Create a Repository:
+Click on the "Repositories" on the left navigation pane.
+Click on the "Create repository" button.
+
+Configure Repository:
+Provide a name for your repository in the "Repository name" field.
+Optionally, add a tag to your repository (not required).
+Choose the repository's encryption settings (at rest).
+Click on the "Create repository" button.
+
+Sign in to AWS Console:
+Go to the AWS Management Console.
+Sign in with your AWS account.
+
+Navigate to IAM Dashboard:
+In the AWS Management Console, go to the IAM (Identity and Access Management) dashboard.
+
+Create a Role:
+In the left navigation pane, click on "Roles."
+Click the "Create role" button.
+
+Select Type of Trusted Entity:
+Choose the type of trusted entity. If you're creating a role for an AWS service, choose the service
+
+Attach Permissions:
+In the "Permissions" step, attach policies that define the permissions for the role.
+Click "Attach policies" and select the policies you want to attach. You can filter and search for policies based on your requirements.
+
+Step 4
+Login to Elastic Container Registry from AWS CLI
+Tag the Image and Push your Image to Amazon ECR
+
+Authenticate Docker to ECR (Optional):
+Before pushing Docker images to your ECR repository, you need to authenticate Docker to the ECR registry. Run the following command in your terminal:
+aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 951584697716.dkr.ecr.us-east-1.amazonaws.com
+
+Build your Docker image using the docker build command.
+Tag your Docker image with the ECR repository URI:
+docker tag html-web-nginx:v1 951584697716.dkr.ecr.us-east-1.amazonaws.com/dockerrkb-repo 
+
+Push the Docker image to the ECR repository:
+docker push 951584697716.dkr.ecr.us-east-1.amazonaws.com/dockerrkb-repo
+
+Verify:
+Go back to the AWS Management Console, navigate to Amazon ECR, and click on your repository.
+You should see your pushed Docker image listed in the repository.
+
+
+Step 5
+Create an Application Load Balancer in AWS
+
+Sign in to AWS Console:
+Go to the AWS Management Console.
+Sign in with your AWS account.
+
+Navigate to EC2 Dashboard:
+In the AWS Management Console, go to the EC2 dashboard.
+
+Choose Load Balancers:
+In the left navigation pane, under "Load Balancing," click on "Load Balancers."
+
+Create Load Balancer:
+Click the "Create Load Balancer" button.
+
+Choose Application Load Balancer:
+Select "Application Load Balancer" as the type of load balancer.
+
+Configure Load Balancer:
+Basic Configuration:
+
+Provide a name for your load balancer.
+Choose the appropriate scheme (internet-facing or internal).
+
+Define the listener configuration, including protocol and port. For example, you can set up HTTP (80)
+Availability Zones:
+select the availability zones where you want the load balancer to distribute traffic.
+
+Target Groups:
+Create a new target group or select an existing one. A target group is associated with one or more instances that handle the incoming traffic.
+
+Create:
+Click the "Create" button to create the Application Load Balancer
+
+
+Step 6
+Create Task Definition, Cluster and Service in Amazon ECS | Using Load Balancer in ECS Navigate to Amazon ECS Dashboard:
+
+In the AWS Management Console, go to the ECS dashboard.
+
+Create a Task Definition:
+In the left navigation pane, click on "Task Definitions."
+Click the "Create new Task Definition" button.
+
+Launch type compatibility:
+Choose between EC2 or Fargate, depending on your requirements.
+Task Definition Name and Role:
+
+Provide a name for your task definition.
+Optionally, configure the task execution role.
+
+Task size (resources):
+Specify CPU and memory requirements for your containers.
+
+Container Definitions:
+Add container definitions, specifying image, name, port mappings, environment variables, and other settings.
+
+Network Mode:
+Choose the appropriate network mode (bridge, host, awsvpc) based on your networking requirements.
+
+Create a Cluster:
+In the left navigation pane, click on "Clusters."
+Click the "Create Cluster" button.
+
+Cluster Configuration:
+Cluster Name:
+Provide a name for your cluster.
+
+Cluster Template (Optional):
+Choose a cluster template if applicable.
+
+EC2 or Fargate Cluster:
+Choose between EC2 or Fargate launch type.
+VPC:
+Choose the VPC where you want to launch your tasks.
+
+Subnets:
+Select the subnets in which your tasks will run.
+
+Security Groups:
+Configure security groups for your tasks.
+
+Click "Create" to create the cluster.
+
+Create a Service:
+
+In the ECS dashboard, click on "Clusters" and select the cluster you created.
+Service Configuration:
+Click the "Create" button under the "Services" tab.
+
+Launch type:
+Choose the launch type (EC2 or Fargate).
+
+Task Definition:
+Select the task definition you created.
+
+Service name:
+Provide a name for your service.
+
+Number of tasks:
+Specify the number of tasks to run in the service.
+
+
+Container to load balance:
+Specify the container and port to load balance if using a load balancer.
+
+Click "Next" and review your configuration. Click "Create Service" to create the ECS service.
+
+
